@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Game</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #87CEEB;
+            overflow: hidden;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        #game {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background: #222;
+            border: 2px solid #000;
+            overflow: hidden;
+        }
+
+        .bird {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: yellow;
+            border-radius: 50%;
+            top: 200px;
+            left: 50px;
+        }
+
+        .pipe {
+            position: absolute;
+            width: 50px;
+            background: green;
+        }
+
+        .pipe.top {
+            top: 0;
+        }
+
+        .pipe.bottom {
+            bottom: 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #play-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #play-button:hover {
+            background-color: #45a049;
+        }
+
+        #message {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Flappy Bird Game</h1>
+        <button id="play-button">Play</button>
+        <div id="game" class="hidden">
+            <div class="bird" id="bird"></div>
+        </div>
+        <div id="message" class="hidden">You Lost! Press F5 to Restart</div>
+    </div>
+
+    <script>
+        const playButton = document.getElementById('play-button');
+        const game = document.getElementById('game');
+        const bird = document.getElementById('bird');
+        const message = document.getElementById('message');
+
+        const GRAVITY = 0.5;
+        const JUMP = -8;
+        const PIPE_SPEED = 2;
+        const PIPE_GAP = 120;
+
+        let birdY = 200;
+        let birdVelocity = 0;
+        let pipes = [];
+        let isGameRunning = false;
+
+        function startGame() {
+            playButton.classList.add('hidden');
+            game.classList.remove('hidden');
+            birdY = 200;
+            birdVelocity = 0;
+            pipes = [];
+            isGameRunning = true;
+            createPipe();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function createPipe() {
+            const pipeHeight = Math.random() * 200 + 50;
+            const pipeTop = document.createElement('div');
+            const pipeBottom = document.createElement('div');
+
+            pipeTop.classList.add('pipe', 'top');
+            pipeTop.style.height = `${pipeHeight}px`;
+            pipeTop.style.right = '0px';
+
+            pipeBottom.classList.add('pipe', 'bottom');
+            pipeBottom.style.height = `${400 - pipeHeight - PIPE_GAP}px`;
+            pipeBottom.style.right = '0px';
+
+            game.appendChild(pipeTop);
+            game.appendChild(pipeBottom);
+            pipes.push({ top: pipeTop, bottom: pipeBottom, x: game.clientWidth });
+        }
+
+        function updatePipes() {
+            pipes.forEach((pipe, index) => {
+                pipe.x -= PIPE_SPEED;
+                pipe.top.style.right = `${game.clientWidth - pipe.x}px`;
+                pipe.bottom.style.right = `${game.clientWidth - pipe.x}px`;
+
+                if (pipe.x + 50 < 0) {
+                    pipe.top.remove();
+                    pipe.bottom.remove();
+                    pipes.splice(index, 1);
+                    createPipe();
+                }
+
+                if (
+                    birdY < pipe.top.offsetHeight ||
+                    birdY + 30 > 400 - pipe.bottom.offsetHeight
+                ) {
+                    if (pipe.x < 80 && pipe.x + 50 > 50) {
+                        endGame();
+                    }
+                }
+            });
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            message.classList.remove('hidden');
+        }
+
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            birdVelocity += GRAVITY;
+            birdY += birdVelocity;
+
+            if (birdY <= 0 || birdY + 30 >= 400) {
+                endGame();
+            }
+
+            bird.style.top = `${birdY}px`;
+            updatePipes();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && isGameRunning) {
+                birdVelocity = JUMP;
+            }
+        });
+
+        playButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
