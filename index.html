@@ -106,6 +106,7 @@
         let birdVelocity = 0;
         let pipes = [];
         let isGameRunning = false;
+        let gameStarted = false;
 
         function startGame() {
             playButton.classList.add('hidden');
@@ -114,6 +115,8 @@
             birdVelocity = 0;
             pipes = [];
             isGameRunning = true;
+            gameStarted = false;
+            bird.style.top = `${birdY}px`;
             createPipe();
             requestAnimationFrame(gameLoop);
         }
@@ -168,21 +171,29 @@
         function gameLoop() {
             if (!isGameRunning) return;
 
-            birdVelocity += GRAVITY;
-            birdY += birdVelocity;
+            if (gameStarted) {
+                birdVelocity += GRAVITY;
+                birdY += birdVelocity;
 
-            if (birdY <= 0 || birdY + 30 >= 400) {
-                endGame();
+                if (birdY <= 0 || birdY + 30 >= 400) {
+                    endGame();
+                }
+
+                updatePipes();
             }
 
             bird.style.top = `${birdY}px`;
-            updatePipes();
             requestAnimationFrame(gameLoop);
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && isGameRunning) {
-                birdVelocity = JUMP;
+            if (e.code === 'Space') {
+                if (!gameStarted) {
+                    gameStarted = true;
+                    birdVelocity = JUMP;
+                } else if (isGameRunning) {
+                    birdVelocity = JUMP;
+                }
             }
         });
 
