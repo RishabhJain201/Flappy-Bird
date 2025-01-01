@@ -26,7 +26,8 @@
             width: 100%;
             max-width: 600px;
             height: 400px;
-            background: #222;
+            background: url('background_and_road.png') no-repeat bottom center;
+            background-size: cover;
             border: 2px solid #000;
             overflow: hidden;
         }
@@ -35,8 +36,8 @@
             position: absolute;
             width: 30px;
             height: 30px;
-            background: yellow;
-            border-radius: 50%;
+            background: url('bird.png') no-repeat center center;
+            background-size: contain;
             top: 200px;
             left: 50px;
         }
@@ -139,7 +140,18 @@
             pipes.push({ top: pipeTop, bottom: pipeBottom, x: game.clientWidth });
         }
 
+        function isColliding(rect1, rect2) {
+            return !(
+                rect1.right < rect2.left ||
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom
+            );
+        }
+
         function updatePipes() {
+            const birdRect = bird.getBoundingClientRect();
+
             pipes.forEach((pipe, index) => {
                 pipe.x -= PIPE_SPEED;
                 pipe.top.style.right = `${game.clientWidth - pipe.x}px`;
@@ -152,13 +164,11 @@
                     createPipe();
                 }
 
-                if (
-                    birdY < pipe.top.offsetHeight ||
-                    birdY + 30 > 400 - pipe.bottom.offsetHeight
-                ) {
-                    if (pipe.x < 80 && pipe.x + 50 > 50) {
-                        endGame();
-                    }
+                const pipeTopRect = pipe.top.getBoundingClientRect();
+                const pipeBottomRect = pipe.bottom.getBoundingClientRect();
+
+                if (isColliding(birdRect, pipeTopRect) || isColliding(birdRect, pipeBottomRect)) {
+                    endGame();
                 }
             });
         }
