@@ -1,213 +1,98 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappy Bird Game</title>
+    <title>Game Collection</title>
     <style>
         body {
-            margin: 0;
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             background-color: #87CEEB;
-            overflow: hidden;
         }
-
-        #game-container {
+        .navbar {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
+            background-color: #333;
+            padding: 10px 20px;
         }
-
-        #game {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            height: 400px;
-            background: url('background_and_road.png') no-repeat bottom center;
-            background-size: cover;
-            border: 2px solid #000;
-            overflow: hidden;
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
         }
-
-        .bird {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: url('bird.png') no-repeat center center;
-            background-size: contain;
-            top: 200px;
-            left: 50px;
-        }
-
-        .pipe {
-            position: absolute;
-            width: 50px;
-            background: green;
-        }
-
-        .pipe.top {
-            top: 0;
-        }
-
-        .pipe.bottom {
-            bottom: 0;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #play-button {
+        .navbar a.active {
             background-color: #4CAF50;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
         }
-
-        #play-button:hover {
-            background-color: #45a049;
-        }
-
-        #message {
-            font-size: 24px;
-            font-weight: bold;
+        .navbar a:hover {
+            background-color: #555;
             color: white;
+        }
+        .tab {
+            display: none;
+            padding: 20px;
+        }
+        .tab.active {
+            display: block;
+        }
+        .game-container {
+            text-align: center;
+        }
+        .game-frame {
+            border: 2px solid #000;
+            display: inline-block;
+            margin: 20px auto;
+        }
+        #flappy-bird-title {
             margin-top: 20px;
         }
+        .blank-message {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 20px;
+        }
     </style>
+    <script>
+        function openTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            const activeTab = document.getElementById(tabName);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
+            const links = document.querySelectorAll('.navbar a');
+            links.forEach(link => link.classList.remove('active'));
+
+            const activeLink = document.querySelector(`[onclick="openTab('${tabName}')"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+        }
+    </script>
 </head>
 <body>
-    <div id="game-container">
-        <h1>Flappy Bird Game</h1>
-        <button id="play-button">Play</button>
-        <div id="game" class="hidden">
-            <div class="bird" id="bird"></div>
-        </div>
-        <div id="message" class="hidden">You Lost! Press F5 to Restart</div>
+    <div class="navbar">
+        <a href="#" onclick="openTab('flappy-bird')" class="active">Flappy Bird</a>
+        <a href="#" onclick="openTab('car-game')">Car Game</a>
     </div>
 
-    <script>
-        const playButton = document.getElementById('play-button');
-        const game = document.getElementById('game');
-        const bird = document.getElementById('bird');
-        const message = document.getElementById('message');
+    <!-- Flappy Bird Game Tab -->
+    <div id="flappy-bird" class="tab active">
+        <div class="game-container">
+            <h1 id="flappy-bird-title">Flappy Bird Game</h1>
+            <iframe src="https://flappybird.io/" width="320" height="480" class="game-frame"></iframe>
+        </div>
+    </div>
 
-        const GRAVITY = 0.5;
-        const JUMP = -8;
-        const PIPE_SPEED = 2;
-        const PIPE_GAP = 120;
-
-        let birdY = 200;
-        let birdVelocity = 0;
-        let pipes = [];
-        let isGameRunning = false;
-        let gameStarted = false;
-
-        function startGame() {
-            playButton.classList.add('hidden');
-            game.classList.remove('hidden');
-            birdY = 200;
-            birdVelocity = 0;
-            pipes = [];
-            isGameRunning = true;
-            gameStarted = false;
-            bird.style.top = `${birdY}px`;
-            createPipe();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function createPipe() {
-            const pipeHeight = Math.random() * 200 + 50;
-            const pipeTop = document.createElement('div');
-            const pipeBottom = document.createElement('div');
-
-            pipeTop.classList.add('pipe', 'top');
-            pipeTop.style.height = `${pipeHeight}px`;
-            pipeTop.style.right = '0px';
-
-            pipeBottom.classList.add('pipe', 'bottom');
-            pipeBottom.style.height = `${400 - pipeHeight - PIPE_GAP}px`;
-            pipeBottom.style.right = '0px';
-
-            game.appendChild(pipeTop);
-            game.appendChild(pipeBottom);
-            pipes.push({ top: pipeTop, bottom: pipeBottom, x: game.clientWidth });
-        }
-
-        function isColliding(rect1, rect2) {
-            return !(
-                rect1.right < rect2.left ||
-                rect1.left > rect2.right ||
-                rect1.bottom < rect2.top ||
-                rect1.top > rect2.bottom
-            );
-        }
-
-        function updatePipes() {
-            const birdRect = bird.getBoundingClientRect();
-
-            pipes.forEach((pipe, index) => {
-                pipe.x -= PIPE_SPEED;
-                pipe.top.style.right = `${game.clientWidth - pipe.x}px`;
-                pipe.bottom.style.right = `${game.clientWidth - pipe.x}px`;
-
-                if (pipe.x + 50 < 0) {
-                    pipe.top.remove();
-                    pipe.bottom.remove();
-                    pipes.splice(index, 1);
-                    createPipe();
-                }
-
-                const pipeTopRect = pipe.top.getBoundingClientRect();
-                const pipeBottomRect = pipe.bottom.getBoundingClientRect();
-
-                if (isColliding(birdRect, pipeTopRect) || isColliding(birdRect, pipeBottomRect)) {
-                    endGame();
-                }
-            });
-        }
-
-        function endGame() {
-            isGameRunning = false;
-            message.classList.remove('hidden');
-        }
-
-        function gameLoop() {
-            if (!isGameRunning) return;
-
-            if (gameStarted) {
-                birdVelocity += GRAVITY;
-                birdY += birdVelocity;
-
-                if (birdY <= 0 || birdY + 30 >= 400) {
-                    endGame();
-                }
-
-                updatePipes();
-            }
-
-            bird.style.top = `${birdY}px`;
-            requestAnimationFrame(gameLoop);
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                if (!gameStarted) {
-                    gameStarted = true;
-                    birdVelocity = JUMP;
-                } else if (isGameRunning) {
-                    birdVelocity = JUMP;
-                }
-            }
-        });
-
-        playButton.addEventListener('click', startGame);
-    </script>
+    <!-- Car Game Tab -->
+    <div id="car-game" class="tab">
+        <div class="blank-message">Car Game will be implemented here.</div>
+    </div>
 </body>
 </html>
